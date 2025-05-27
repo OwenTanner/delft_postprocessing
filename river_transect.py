@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from eastings_to_graph import (
+from delft_postprocessing.helpers import (
     calculate_path_distances, 
     find_element_from_coordinates, 
     get_value_for_element
