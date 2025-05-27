@@ -22,7 +22,7 @@ def calculate_distance(easting1, northing1, easting2, northing2):
     """
     return np.sqrt((easting2 - easting1)**2 + (northing2 - northing1)**2)
 
-def find_element_from_coordinates(easting, northing, geom_file_path="14DayHYD_NoWind_Nash_HD_waqgeom.nc", search_radius=100):
+def find_element_from_coordinates(easting, northing, geom_file_path="14DayHYD_NoWind_Nash_HD_waqgeom.nc"):
     """
     Find the mesh element ID containing the given coordinates.
     Uses spatial filtering to only check elements with nodes within search_radius.
@@ -31,11 +31,15 @@ def find_element_from_coordinates(easting, northing, geom_file_path="14DayHYD_No
         easting: X coordinate (easting)
         northing: Y coordinate (northing)
         geom_file_path: Path to the geometry netCDF file
-        search_radius: Radius in meters to search for nearby nodes
         
     Returns:
         int: Element ID if found, None if not found
+        
+    Note:
+        If no element is found, consider increasing the search radius value. 
     """
+    search_radius = 50  # Radius in meters to search for nearby nodes
+
     # Open the geometry file
     nc = netCDF4.Dataset(geom_file_path)
     
@@ -83,10 +87,6 @@ def find_element_from_coordinates(easting, northing, geom_file_path="14DayHYD_No
         if polygon.contains(point):
             found_elem = elem_idx
             break
-    
-    # Add diagnostic info
-    total_elements = len(elem_node)
-    print(f"Checked {elements_checked} elements out of {total_elements} ({elements_checked/total_elements*100:.2f}%)")
     
     nc.close()
     return found_elem
