@@ -22,14 +22,16 @@ def calculate_distance(easting1, northing1, easting2, northing2):
     """
     return np.sqrt((easting2 - easting1)**2 + (northing2 - northing1)**2)
 
-def find_element_from_coordinates(easting, northing, geom_file_path="14DayHYD_NoWind_Nash_HD_waqgeom.nc"):
+def find_element_from_coordinates(easting, northing, geom_file_path="14DayHYD_NoWind_Nash_HD_waqgeom.nc", search_radius=100):
     """
     Find the mesh element ID containing the given coordinates.
+    Uses spatial filtering to only check elements with nodes within search_radius.
     
     Args:
         easting: X coordinate (easting)
         northing: Y coordinate (northing)
         geom_file_path: Path to the geometry netCDF file
+        search_radius: Radius in meters to search for nearby nodes
         
     Returns:
         int: Element ID if found, None if not found
@@ -50,18 +52,41 @@ def find_element_from_coordinates(easting, northing, geom_file_path="14DayHYD_No
     
     # Convert coordinates to a shapely Point
     point = Point(easting, northing)
-    found_elem = None
     
-    # Search through elements
+    # Create a spatial filter to identify nearby nodes
+    node_distances = np.sqrt((x - easting)**2 + (y - northing)**2)
+    nearby_nodes = np.where(node_distances <= search_radius)[0]
+    
+    # Create a set of nearby nodes for faster lookup
+    nearby_nodes_set = set(nearby_nodes)
+    
+    # Only check elements that contain at least one nearby node
+    found_elem = None
+    elements_checked = 0
+    
     for elem_idx, node_ids in enumerate(elem_node):
-        valid_ids = node_ids[node_ids >= 0]  # Remove invalid node indices (padding)
+        # Filter out padding values
+        valid_ids = node_ids[node_ids >= 0]
+        
+        # Check if any node in this element is nearby
+        if not any(node_id in nearby_nodes_set for node_id in valid_ids):
+            continue
+            
+        # This element has at least one nearby node, check if it contains the point
+        elements_checked += 1
         poly_coords = list(zip(x[valid_ids], y[valid_ids]))
+        
         if len(poly_coords) < 3:
             continue  # Not a valid polygon
+            
         polygon = Polygon(poly_coords)
         if polygon.contains(point):
             found_elem = elem_idx
             break
+    
+    # Add diagnostic info
+    total_elements = len(elem_node)
+    print(f"Checked {elements_checked} elements out of {total_elements} ({elements_checked/total_elements*100:.2f}%)")
     
     nc.close()
     return found_elem
