@@ -157,4 +157,132 @@ class RiverTransect:
     def get_dataframe(self):
         """Return the pandas DataFrame containing all transect data"""
         return self.df
+    
+    def get_din(self):
+        """
+        Calculate mean DIN values by summing Mesh2D_2d_MEAN_FullRun_cTR2 and Mesh2D_2d_MEAN_FullRun_cTR4.
+        
+        Returns:
+            bool: True if calculation successful, False otherwise
+        """
+        # Load required variables if they aren't already loaded
+        variables = ['Mesh2D_2d_MEAN_FullRun_cTR2', 'Mesh2D_2d_MEAN_FullRun_cTR4']
+        for var in variables:
+            if var not in self.df.columns:
+                self.load_variable(var)
+        
+        # Check if all required variables were successfully loaded
+        if not all(var in self.df.columns for var in variables):
+            print("Warning: Could not calculate mean DIN - required variables not available")
+            return False
+        
+        # Calculate mean DIN and add to dataframe
+        self.df['mean_din'] = self.df['Mesh2D_2d_MEAN_FullRun_cTR2'] + self.df['Mesh2D_2d_MEAN_FullRun_cTR4']
+        
+        return True
+
+    def get_din_std_dev(self):
+        """
+        Calculate DIN standard deviation using the formula:
+        sqrt(σ²_cTR2 + σ²_cTR4 + 2*σ_cTR2*σ_cTR4)
+        Given they are strongly correlated.
+        Returns:
+            bool: True if calculation successful, False otherwise
+        """
+        # Load required variables if they aren't already loaded
+        variables = ['Mesh2D_2d_STDEV_FullRun_cTR2', 'Mesh2D_2d_STDEV_FullRun_cTR4']
+        for var in variables:
+            if var not in self.df.columns:
+                self.load_variable(var)
+        
+        # Check if all required variables were successfully loaded
+        if not all(var in self.df.columns for var in variables):
+            print("Warning: Could not calculate DIN standard deviation - required variables not available")
+            return False
+        
+        # Get shorthands for easier formula expression
+        stdev_tr2 = self.df['Mesh2D_2d_STDEV_FullRun_cTR2']
+        stdev_tr4 = self.df['Mesh2D_2d_STDEV_FullRun_cTR4']
+        
+        import numpy as np
+        
+        # Handle the calculation with proper masked array support
+        # First convert pandas series to numpy arrays
+        tr2_array = np.array(stdev_tr2)
+        tr4_array = np.array(stdev_tr4)
+        
+        # Replace None with np.nan
+        tr2_array = np.where(pd.isna(tr2_array), np.nan, tr2_array)
+        tr4_array = np.where(pd.isna(tr4_array), np.nan, tr4_array)
+        
+        # Calculate the result
+        result = tr2_array+tr4_array
+        
+        # Add to DataFrame
+        self.df['din_std_dev'] = result
+        
+        return True
+    
+    def calculate_din_percentile(self, percentile):
+        """
+        Calculate the specified percentile of DIN using log-normal distribution.
+        
+        Args:
+            percentile: The percentile to calculate (e.g., 90 for 90th percentile)
+            
+        Returns:
+            pandas.Series: The calculated percentile values for each point
+        """
+        import numpy as np
+        from scipy import stats
+        
+        # Ensure we have mean_din and din_std_dev
+        if 'mean_din' not in self.df.columns:
+            success = self.get_din()
+            if not success:
+                return None
+        
+        if 'din_std_dev' not in self.df.columns:
+            success = self.get_din_std_dev()
+            if not success:
+                return None
+        
+        # Get the mean and standard deviation
+        mean_din = self.df['mean_din']
+        std_dev_din = self.df['din_std_dev']
+        
+        # Convert percentile to proportion (e.g., 90 -> 0.9)
+        p = percentile / 100.0
+        
+        # Calculate parameters of the log-normal distribution
+        # For a log-normal distribution with mean m and variance s²:
+        # The underlying normal distribution has parameters:
+        # μ = ln(m²/√(m² + s²))
+        # σ = √(ln(1 + s²/m²))
+        
+        # Create empty series for results
+        result = pd.Series(index=self.df.index)
+        
+        for i in self.df.index:
+            m = mean_din[i]
+            s = std_dev_din[i]
+            
+            # Handle null values or zeros
+            if pd.isna(m) or pd.isna(s) or m <= 0:
+                result[i] = None
+                continue
+            
+            # Calculate parameters of underlying normal distribution
+            mu = np.log(m**2 / np.sqrt(m**2 + s**2))
+            sigma = np.sqrt(np.log(1 + (s**2 / m**2)))
+            
+            # Calculate the percentile using the log-normal distribution
+            percentile_value = np.exp(mu + sigma * stats.norm.ppf(p))
+            result[i] = percentile_value
+        
+        # Add to DataFrame with a descriptive column name
+        column_name = f'din_percentile_{percentile}'
+        self.df[column_name] = result
+        
+        return result
 
