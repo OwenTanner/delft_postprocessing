@@ -50,7 +50,11 @@ for i, row_id in enumerate(df['id']):
                    xytext=(5, 5), textcoords='offset points')
 
 plt.tight_layout()
-plt.show()
+plot_filename = "din_river_length.png"
+plt.savefig(plot_filename, dpi=300)
+plt.show(block=False)
+plt.pause(5)  # Show plot for 5 seconds
+plt.close()
 
 # Print summary statistics
 print("\nSummary statistics for DIN:")
