@@ -39,6 +39,12 @@ ENV/
 *.swo
 *~
 
+# Output files
+*.png
+*.jpg
+*.jpeg
+*.pdf
+
 # OS specific files
 .DS_Store
 Thumbs.db
