@@ -3,12 +3,16 @@ import matplotlib.pyplot as plt
 from river_transect import RiverTransect
 
 # Read the CSV file
-csv_path = "example_usk.csv"
+csv_path = "Usk Transects/Cross Section 1.csv"
 df = pd.read_csv(csv_path)
 
-# Extract eastings and northings
-eastings = df["X (Easting)"].tolist()
-northings = df["Y (Northing)"].tolist()
+# Use different column names depending on the folder
+if "Usk" in csv_path:
+    eastings = df["E"].tolist()
+    northings = df["N"].tolist()
+else:
+    eastings = df["X (Easting)"].tolist()
+    northings = df["Y (Northing)"].tolist()
 
 print(f"Read {len(eastings)} points from {csv_path}")
 
@@ -48,7 +52,8 @@ ax.set_ylabel('DIN Concentration')
 ax.set_title('DIN Concentrations Along River Transect')
 ax.legend()
 ax.grid(True)
-ax.set_yscale('log')
+ax.set_yscale('log') 
+
 
 # Add point markers
 for i in range(len(transect.df)):
