@@ -27,6 +27,9 @@ transect.get_din_std_dev()
 transect.calculate_din_percentile(10)  # 10th percentile
 transect.calculate_din_percentile(90)  # 90th percentile
 
+# Calculate WFD performance
+transect.wfd_performance()
+
 # Create a single plot with all three percentiles
 fig, ax = plt.subplots(figsize=(12, 7))
 
@@ -34,6 +37,10 @@ fig, ax = plt.subplots(figsize=(12, 7))
 ax.plot(transect.df['distance'], transect.df['din_percentile_10'], 'b--', label='10th Percentile')
 ax.plot(transect.df['distance'], transect.df['mean_din'], 'g-', label='Mean')
 ax.plot(transect.df['distance'], transect.df['din_percentile_90'], 'r--', label='90th Percentile')
+ax.plot(transect.df['distance'], transect.df['WFD Good'], 'k:', label='WFD Good')
+ax.plot(transect.df['distance'], transect.df['WFD High'], 'k--', label='WFD High')
+ax.plot(transect.df['distance'], transect.df['WFD Moderate'], 'm-.', label='WFD Moderate')
+ax.plot(transect.df['distance'], transect.df['WFD Poor'], 'c:', label='WFD Poor')
 
 # Add labels and title
 ax.set_xlabel('River distance (m)')
@@ -41,6 +48,7 @@ ax.set_ylabel('DIN Concentration')
 ax.set_title('DIN Concentrations Along River Centreline')
 ax.legend()
 ax.grid(True)
+ax.set_yscale('log')  # Set y-axis to log scale
 
 # Add point markers with their original IDs from the CSV
 for i, row_id in enumerate(df['id']):

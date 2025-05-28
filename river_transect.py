@@ -180,6 +180,15 @@ class RiverTransect:
         self.df['mean_din'] = self.df['Mesh2D_2d_MEAN_FullRun_cTR2'] + self.df['Mesh2D_2d_MEAN_FullRun_cTR4']
         
         return True
+    
+    def wfd_performance(self):
+        
+        self.df['WFD High'] = 0.282
+        self.df['WFD Good'] = 3.807
+        self.df['WFD Moderate'] = 5.7105
+        self.df['WFD Poor'] = 8.56575
+        
+        return True
 
     def get_din_std_dev(self):
         """
