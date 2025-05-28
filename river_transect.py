@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from delft_postprocessing.helpers import (
+from helpers import (
     calculate_path_distances, 
     find_element_from_coordinates, 
     get_value_for_element
@@ -95,14 +95,22 @@ class RiverTransect:
         """
         Plot the transect data.
         If variable_name is specified, plots distance vs variable value.
-        Otherwise plots the transect path on X-Y coordinates.
+        If variable_name is None, returns empty figure and axis without plotting.
         
         Args:
             variable_name: Optional name of variable to plot against distance
+            
+        Returns:
+            tuple: (fig, ax) matplotlib figure and axis objects
         """
         fig, ax = plt.subplots(figsize=(10, 6))
         
-        if variable_name is not None and variable_name in self.df.columns:
+        # If no variable specified, return empty plot
+        if variable_name is None:
+            return fig, ax
+            
+        # Check if the variable exists in the dataframe
+        if variable_name in self.df.columns:
             # Plot distance vs variable value
             ax.plot(self.df['distance'], self.df[variable_name], 'o-')
             ax.set_xlabel('Distance along transect (m)')
@@ -113,21 +121,38 @@ class RiverTransect:
             for i, (d, v) in enumerate(zip(self.df['distance'], self.df[variable_name])):
                 if v is not None:  # Only label points with valid values
                     ax.text(d, v, f'  {i+1}', va='center')
+                    
+            plt.grid(True)
+            plt.tight_layout()
         else:
-            # Plot the transect path on X-Y coordinates
-            ax.plot(self.df['easting'], self.df['northing'], 'o-')
-            ax.set_xlabel('Easting')
-            ax.set_ylabel('Northing')
-            ax.set_title('Transect path')
-            ax.set_aspect('equal')
+            # Variable doesn't exist in the dataframe
+            print(f"Warning: Variable '{variable_name}' not found in transect data")
             
-            # Add point labels
-            for i, (e, n) in enumerate(zip(self.df['easting'], self.df['northing'])):
-                ax.text(e, n, f'  {i+1}', va='center')
-        
-        plt.grid(True)
-        plt.tight_layout()
         return fig, ax
+    
+    def list_available_variables(self):
+        """
+        List all variable names available in the statistics file.
+        
+        Returns:
+            list: Names of all variables in the statistics file
+        """
+        import netCDF4
+        
+        try:
+            with netCDF4.Dataset(self.stat_file_path) as nc:
+                # Get all variable names
+                variables = list(nc.variables.keys())
+                
+                # Optional: print them for convenience
+                print(f"Found {len(variables)} variables in {self.stat_file_path}")
+                for var in variables:
+                    print(f"  - {var}")
+                    
+                return variables
+        except Exception as e:
+            print(f"Error reading variables: {e}")
+            return []
     
     def get_dataframe(self):
         """Return the pandas DataFrame containing all transect data"""
