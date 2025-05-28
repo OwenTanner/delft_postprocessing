@@ -64,7 +64,7 @@ def calculate_path_distances(eastings, northings):
     
     return cumulative_distances
 
-def find_element_from_coordinates(easting, northing, geom_file_path="14DayHYD_NoWind_Nash_HD_waqgeom.nc"):
+def find_element_from_coordinates(easting, northing, geom_file_path="../14DayHYD_NoWind_Nash_HD_waqgeom.nc"):
     """
     Find the mesh element ID containing the given coordinates.
     Uses spatial filtering to only check elements with nodes within search_radius.
@@ -133,7 +133,7 @@ def find_element_from_coordinates(easting, northing, geom_file_path="14DayHYD_No
     nc.close()
     return found_elem
 
-def get_value_for_element(element_id, variable_name, stat_file_path="deltashell-stat_map.nc"):
+def get_value_for_element(element_id, variable_name, stat_file_path="../deltashell-stat_map.nc"):
     """
     Get the value of a specified variable for a given element ID.
     
@@ -166,8 +166,8 @@ def get_value_for_element(element_id, variable_name, stat_file_path="deltashell-
         return None
 
 def get_value_from_coordinates(easting, northing, variable_name, 
-                              geom_file_path="14DayHYD_NoWind_Nash_HD_waqgeom.nc", 
-                              stat_file_path="deltashell-stat_map.nc"):
+                              geom_file_path="../14DayHYD_NoWind_Nash_HD_waqgeom.nc", 
+                              stat_file_path="../deltashell-stat_map.nc"):
     """
     Get the value of a variable at specified coordinates.
     
