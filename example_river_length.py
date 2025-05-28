@@ -13,8 +13,8 @@ northings = df["N"].tolist()
 print(f"Read {len(eastings)} points from {csv_path}")
 
 # Set file paths
-geom_file_path = "14DayHYD_NoWind_Nash_HD_waqgeom.nc"
-stat_file_path = "deltashell-stat_map.nc"
+geom_file_path = "../14DayHYD_NoWind_Nash_HD_waqgeom.nc"
+stat_file_path = "../deltashell-stat_map.nc"
 
 # Create a transect with points from the CSV
 transect = RiverTransect(eastings, northings, geom_file_path=geom_file_path, stat_file_path=stat_file_path)
