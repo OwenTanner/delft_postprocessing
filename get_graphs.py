@@ -175,7 +175,7 @@ def process_transect(csv_path, title_text, geom_file_path, stat_file_path):
     transect.add_bod_baseline()
     
     # Generate filename base from title_text
-    if "cross section" in title_text.lower():
+    if "cross section" in title_text:
         section_num = title_text.split()[-1]
         din_filename_base = f"din_cross_section_{section_num}"
         bod_filename_base = f"bod_cross_section_{section_num}"
