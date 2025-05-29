@@ -18,6 +18,11 @@ def plot_din_stats(ax, transect_df, df, title_text):
     ax.plot(transect_df['distance'], transect_df['mean_din'], 'g-', label='Mean')
     ax.plot(transect_df['distance'], transect_df['din_percentile_90'], 'r--', label='90th Percentile')
     
+    # Plot DIN baseline
+    if 'DIN 10 Percent Plus Baseline' in transect_df.columns:
+        ax.plot(transect_df['distance'], transect_df['DIN 10 Percent Plus Baseline'], 
+                'k-', linewidth=2, label='DIN Baseline (0.88)')
+    
     # Add labels and title
     ax.set_xlabel('Distance (m)')
     ax.set_ylabel('DIN concentration (mg N/l)')
@@ -61,13 +66,48 @@ def plot_din_with_wfd(ax, transect_df, df, title_text):
     ax.set_title(f'DIN concentrations in {title_text} with WFD guidelines')
     ax.legend()
     ax.grid(True)
-    ax.set_yscale('log')  # Set y-axis to log scale
     
     # Add point markers with their original IDs from the CSV
     for i, row_id in enumerate(df['id']):
         if i < len(transect_df) and not pd.isna(transect_df['mean_din'].iloc[i]):
             ax.annotate(f"{row_id}", 
                       (transect_df['distance'].iloc[i], transect_df['mean_din'].iloc[i]),
+                      xytext=(5, 5), textcoords='offset points')
+    
+    return ax
+
+def plot_bod(ax, transect_df, df, title_text):
+    """
+    Plot BOD statistics on the given axis.
+    
+    Args:
+        ax: Matplotlib axis to plot on
+        transect_df: DataFrame from RiverTransect object
+        df: Original CSV DataFrame (for point IDs)
+        title_text: Text to use in plot title
+    """
+    # Plot BOD statistics
+    ax.plot(transect_df['distance'], transect_df['bod_percentile_10'], 'b--', label='10th Percentile')
+    ax.plot(transect_df['distance'], transect_df['BOD Mean'], 'g-', label='Mean')
+    ax.plot(transect_df['distance'], transect_df['bod_percentile_90'], 'r--', label='90th Percentile')
+    
+    # Plot BOD baseline
+    if 'BOD 10 Percent Plus Baseline' in transect_df.columns:
+        ax.plot(transect_df['distance'], transect_df['BOD 10 Percent Plus Baseline'], 
+                'k-', linewidth=2, label='BOD Baseline (4.4)')
+    
+    # Add labels and title
+    ax.set_xlabel('Distance (m)')
+    ax.set_ylabel('BOD concentration (mg/l)')
+    ax.set_title(f'BOD concentrations in {title_text}')
+    ax.legend()
+    ax.grid(True)
+    
+    # Add point markers with their original IDs from the CSV
+    for i, row_id in enumerate(df['id']):
+        if i < len(transect_df) and not pd.isna(transect_df['BOD Mean'].iloc[i]):
+            ax.annotate(f"{row_id}", 
+                      (transect_df['distance'].iloc[i], transect_df['BOD Mean'].iloc[i]),
                       xytext=(5, 5), textcoords='offset points')
     
     return ax
@@ -116,19 +156,32 @@ def process_transect(csv_path, title_text, geom_file_path, stat_file_path):
     transect.get_din()
     transect.get_din_std_dev()
     
-    # Calculate 10th and 90th percentiles
+    # Calculate 10th and 90th percentiles for DIN
     transect.calculate_din_percentile(10)
     transect.calculate_din_percentile(90)
+    
+    # Add DIN baseline
+    transect.add_din_baseline()
     
     # Calculate WFD performance
     transect.wfd_performance()
     
+    # Calculate BOD mean, standard deviation, and percentiles
+    transect.get_bod()
+    transect.calculate_bod_percentile(10)
+    transect.calculate_bod_percentile(90)
+    
+    # Add BOD baseline
+    transect.add_bod_baseline()
+    
     # Generate filename base from title_text
     if "cross section" in title_text.lower():
         section_num = title_text.split()[-1]
-        filename_base = f"din_cross_section_{section_num}"
+        din_filename_base = f"din_cross_section_{section_num}"
+        bod_filename_base = f"bod_cross_section_{section_num}"
     else:
-        filename_base = "din_centreline"
+        din_filename_base = "din_centreline"
+        bod_filename_base = "bod_centreline"
     
     # ------------------------------------------------------------------------
     # PLOT 1: Just DIN statistics (without WFD guidelines)
@@ -137,7 +190,7 @@ def process_transect(csv_path, title_text, geom_file_path, stat_file_path):
     plot_din_stats(ax1, transect.df, df, title_text)
     plt.tight_layout()
     
-    plot1_filename = f"{filename_base}_stats.png"
+    plot1_filename = f"{din_filename_base}_stats.png"
     plt.savefig(plot1_filename, dpi=300)
     print(f"Plot saved to {plot1_filename}")
     
@@ -148,9 +201,20 @@ def process_transect(csv_path, title_text, geom_file_path, stat_file_path):
     plot_din_with_wfd(ax2, transect.df, df, title_text)
     plt.tight_layout()
     
-    plot2_filename = f"{filename_base}_with_wfd.png"
+    plot2_filename = f"{din_filename_base}_with_wfd.png"
     plt.savefig(plot2_filename, dpi=300)
     print(f"Plot saved to {plot2_filename}")
+    
+    # ------------------------------------------------------------------------
+    # PLOT 3: Just BOD Statistics
+    # ------------------------------------------------------------------------
+    fig3, ax3 = plt.subplots(figsize=(12, 7))
+    plot_bod(ax3, transect.df, df, title_text)
+    plt.tight_layout()
+    
+    plot3_filename = f"{bod_filename_base}_stats.png"
+    plt.savefig(plot3_filename, dpi=300)
+    print(f"Plot saved to {plot3_filename}")
     
     plt.close('all')
     return True
