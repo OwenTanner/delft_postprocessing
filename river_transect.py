@@ -47,14 +47,36 @@ class RiverTransect:
     def get_element_ids(self):
         """
         Populate the dataframe with element IDs for each point.
+        
+        Returns:
+            list: The element IDs for all points (None for points where no element was found)
         """
         element_ids = []
+        total_points = len(self.df)
+        points_not_found = 0
+        
+        print(f"Finding element IDs for {total_points} points...")
+        
         for i, row in self.df.iterrows():
             element_id = find_element_from_coordinates(row['easting'], row['northing'], self.geom_file_path)
+            
+            if element_id is None:
+                points_not_found += 1
+                print(f"Warning: Could not find element for point {i+1} of {total_points} at coordinates " 
+                      f"({row['easting']:.1f}, {row['northing']:.1f})")
+            
             element_ids.append(element_id)
         
         # Add to DataFrame
         self.df['element_id'] = element_ids
+        
+        # Print summary
+        if points_not_found > 0:
+            print(f"Warning: Could not find elements for {points_not_found} out of {total_points} points.")
+            print("Consider increasing search_radius in helpers.py if points are within model domain.")
+        else:
+            print("Successfully found elements for all points.")
+            
         return element_ids
     
     def get_distances(self):
