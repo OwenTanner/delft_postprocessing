@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from river_transect import RiverTransect
 
 # Read the CSV file
-csv_path = "Usk Transects/Cross Section 1.csv"
+csv_path = "Usk Transects/Cross Section 4.csv"
 df = pd.read_csv(csv_path)
 
 # Use different column names depending on the folder
