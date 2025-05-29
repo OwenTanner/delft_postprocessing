@@ -80,7 +80,7 @@ def find_element_from_coordinates(easting, northing, geom_file_path="../14DayHYD
     Note:
         If no element is found, consider increasing the search radius value. 
     """
-    search_radius = 100  # Radius in meters to search for nearby nodes
+    search_radius = 150  # Radius in meters to search for nearby nodes
 
     # Open the geometry file
     nc = netCDF4.Dataset(geom_file_path)
