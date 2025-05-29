@@ -316,4 +316,108 @@ class RiverTransect:
         self.df[column_name] = result
         
         return result
+    
+    def get_bod(self):
+        """
+        Load BOD values from the statistics file.
+        Loads Mesh2D_2d_MEAN_FullRun_cTR3 as 'BOD Mean' and 
+        Mesh2D_2d_STDEV_FullRun_cTR3 as 'BOD Standard Deviation'.
+        
+        Returns:
+            bool: True if calculation successful, False otherwise
+        """
+        # Load mean BOD values
+        if 'BOD Mean' not in self.df.columns:
+            success = self.load_variable('Mesh2D_2d_MEAN_FullRun_cTR3')
+            if success:
+                # Rename the column
+                self.df['BOD Mean'] = self.df['Mesh2D_2d_MEAN_FullRun_cTR3']
+                self.df.drop('Mesh2D_2d_MEAN_FullRun_cTR3', axis=1, inplace=True)
+            else:
+                print("Warning: Could not load BOD Mean data")
+                return False
+        
+        # Load BOD standard deviation values
+        if 'BOD Standard Deviation' not in self.df.columns:
+            success = self.load_variable('Mesh2D_2d_STDEV_FullRun_cTR3')
+            if success:
+                # Rename the column
+                self.df['BOD Standard Deviation'] = self.df['Mesh2D_2d_STDEV_FullRun_cTR3']
+                self.df.drop('Mesh2D_2d_STDEV_FullRun_cTR3', axis=1, inplace=True)
+            else:
+                print("Warning: Could not load BOD Standard Deviation data")
+                return False
+        
+        return True
+
+    def calculate_bod_percentile(self, percentile):
+        """
+        Calculate the specified percentile of BOD using log-normal distribution.
+        
+        Args:
+            percentile: The percentile to calculate (e.g., 90 for 90th percentile)
+            
+        Returns:
+            pandas.Series: The calculated percentile values for each point
+        """
+        import numpy as np
+        from scipy import stats
+        
+        # Ensure we have BOD Mean and BOD Standard Deviation
+        if not self.get_bod():
+            return None
+        
+        # Get the mean and standard deviation
+        mean_bod = self.df['BOD Mean']
+        std_dev_bod = self.df['BOD Standard Deviation']
+        
+        # Convert percentile to proportion (e.g., 90 -> 0.9)
+        p = percentile / 100.0
+        
+        # Calculate parameters of the log-normal distribution
+        # Create empty series for results
+        result = pd.Series(index=self.df.index)
+        
+        for i in self.df.index:
+            m = mean_bod[i]
+            s = std_dev_bod[i]
+            
+            # Handle null values or zeros
+            if pd.isna(m) or pd.isna(s) or m <= 0:
+                result[i] = None
+                continue
+            
+            # Calculate parameters of underlying normal distribution
+            mu = np.log(m**2 / np.sqrt(m**2 + s**2))
+            sigma = np.sqrt(np.log(1 + (s**2 / m**2)))
+            
+            # Calculate the percentile using the log-normal distribution
+            percentile_value = np.exp(mu + sigma * stats.norm.ppf(p))
+            result[i] = percentile_value
+        
+        # Add to DataFrame with a descriptive column name
+        column_name = f'bod_percentile_{percentile}'
+        self.df[column_name] = result
+        
+        return result
+    
+    def add_bod_baseline(self):
+        """
+        Add constant BOD baseline value (4.4) to the dataframe.
+        
+        Returns:
+            bool: Always returns True
+        """
+        self.df['BOD 10 Percent Plus Baseline'] = 4.4
+        return True
+
+    def add_din_baseline(self):
+        """
+        Add constant DIN baseline value (0.88) to the dataframe.
+        
+        Returns:
+            bool: Always returns True
+        """
+        self.df['DIN 10 Percent Plus Baseline'] = 0.88
+        return True
 
