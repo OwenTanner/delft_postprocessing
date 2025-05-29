@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from river_transect import RiverTransect
 
 # Read the Centreline CSV file
-csv_path = "Centreline.csv"
+csv_path = "Usk_Transects/Bonus Cross Section.csv"
 df = pd.read_csv(csv_path)
 
 # Extract eastings and northings from E and N columns
