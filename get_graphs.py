@@ -137,7 +137,7 @@ def process_transect(csv_path, title_text, geom_file_path, stat_file_path):
     plot_din_stats(ax1, transect.df, df, title_text)
     plt.tight_layout()
     
-    plot1_filename = f"{filename_base}_stats.png"
+    plot1_filename = f"Results/{filename_base}_stats.png"
     plt.savefig(plot1_filename, dpi=300)
     print(f"Plot saved to {plot1_filename}")
     
@@ -148,7 +148,7 @@ def process_transect(csv_path, title_text, geom_file_path, stat_file_path):
     plot_din_with_wfd(ax2, transect.df, df, title_text)
     plt.tight_layout()
     
-    plot2_filename = f"{filename_base}_with_wfd.png"
+    plot2_filename = f"Results/{filename_base}_with_wfd.png"
     plt.savefig(plot2_filename, dpi=300)
     print(f"Plot saved to {plot2_filename}")
     
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     process_transect(centreline_path, "the centreline section of the Usk", geom_file_path, stat_file_path)
     
     # Process each cross section
-    for i in range(1, 7):  # 1 through 6
+    for i in range(1, 8):  # 1 through 6
         try:
             csv_path = f"Usk_Transects/Cross_Section_{i}.csv"
             process_transect(csv_path, f"horizontal cross section {i}", geom_file_path, stat_file_path)
