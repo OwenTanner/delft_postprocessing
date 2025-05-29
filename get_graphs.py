@@ -124,7 +124,7 @@ def process_transect(csv_path, title_text, geom_file_path, stat_file_path):
     transect.wfd_performance()
     
     # Generate filename base from title_text
-    if "cross section" in title_text.lower():
+    if "cross section" in title_text:
         section_num = title_text.split()[-1]
         filename_base = f"din_cross_section_{section_num}"
     else:
